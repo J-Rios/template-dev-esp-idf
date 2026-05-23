@@ -1,0 +1,40 @@
+{
+    // Default VSCode settings to be used in the container
+    // You can override these settings in your local VSCode settings.json file.
+
+    // Disable VSCode Extension automatic updates
+    "extensions.autoUpdate": false,
+
+    // Disable Extensions Recommendation pop-ups
+    "extensions.ignoreRecommendations": true,
+
+    // Controls whether text format should be copied into the clipboard
+    "editor.copyWithSyntaxHighlighting": false,
+
+    // Disable GIT warnings when there is a lot of changes
+    "git.ignoreLimitWarning": true,
+
+    // Don't show Gitlens Extension Start Pages on VSCode start
+    "gitlens.showWelcomeOnInstall": false,
+    "gitlens.showWhatsNewAfterUpgrades": false,
+
+    // Don't show Python Extension Start Page on VSCode start
+    "python.showStartPage": false,
+
+    // Don't show CMake Extension Options moved info on VSCode start
+    "cmake.showOptionsMovedNotification": false,
+
+    // Disable Code Spell Plugin to show text spell errors on vscode console
+    "cSpell.diagnosticLevel": "Hint",
+
+    // Modify Code Spell Plugin Hint line color
+    "workbench.colorCustomizations":
+    {
+        "editorHint.foreground": "#eeff00"
+    },
+
+    // Set CMake Parallel Jobs to use (increase project build speed with it)
+    // A 0 value is used for automatic detection of number of CPUs and use the
+    // maximum number of jobs according to it
+    "cmake.parallelJobs": 0
+}

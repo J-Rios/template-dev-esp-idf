@@ -2,22 +2,29 @@
 # Docker File for Embedded Development Environment of Espressif MCUs
 # with esp-idf (e.g. ESP32).
 #
-# It Install all the needed tools on top of a base Linux image to allow
-# firmware development of these devices controllers.
+# It uses the official ESP-IDF Container image by Espressif, and adds
+# extra useful tools (Jlink tools, PlantUML, Pandoc, etc).
 #
 
 ###############################################################################
 
 # Base OS
-FROM ubuntu:26.04
+# https://github.com/espressif/esp-idf/blob/master/tools/docker/Dockerfile
+FROM docker.io/espressif/idf:v6.0.1
+
+# Docker Container User
+ARG ARG_CONTAINER_USER
+ENV CONTAINER_USER=${ARG_CONTAINER_USER}
 
 ###############################################################################
 
-# ESP-IDF Setup
-ARG ESP_IDF_VERSION="v6.0.1"
-ARG ESP_IDF_REPO_URL="https://github.com/espressif/esp-idf.git"
+# VSCode Setup (https://code.visualstudio.com/updates)
+ARG VSCODE_VERSION="1.121.0"
+ARG VSCODE_REPO_URL="https://update.code.visualstudio.com"
+ARG VSCODE_PKG_URL="${VSCODE_REPO_URL}/${VSCODE_VERSION}/linux-deb-x64/stable"
 
 # CMake Setup (https://github.com/Kitware/CMake)
+# Custom CMake version instead of the one provided by the base image
 ARG CMAKE_VERSION="4.3.3"
 ARG CMAKE_PKG="cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
 ARG CMAKE_REPO_URL="https://github.com/Kitware/CMake/releases/download"
@@ -46,19 +53,22 @@ ARG PANDOC_PKG_URL="${PANDOC_REPO_URL}/${PANDOC_VER}/${PANDOC_PKG}"
 
 ###############################################################################
 
-# Set Environment Variable for no user interaction with APT
-ENV DEBIAN_FRONTEND=noninteractive
+# User root is needed to install the tools and vscode extensions
+USER root
 
-# APT Common Commands
-ARG APT_UPDATE="apt-get update"
-ARG APT_INSTALL="apt-get install -y --no-install-recommends"
-ARG APT_CLEAN=\
-"apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*"
+# Create user, ssh and workspace directories
+RUN useradd -ms /bin/bash ${CONTAINER_USER} && \
+    mkdir -p /home/${CONTAINER_USER}/.ssh && \
+    mkdir -p /home/${CONTAINER_USER}/workspace
 
 ###############################################################################
 
+# Set Environment Variable for no user interaction with APT
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install APT Tools
-RUN $APT_UPDATE && $APT_INSTALL apt-utils && $APT_INSTALL \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
         build-essential \
         git \
         python3 \
@@ -93,22 +103,14 @@ RUN $APT_UPDATE && $APT_INSTALL apt-utils && $APT_INSTALL \
         libftdi1-dev \
         libudev-dev \
         && \
-    $APT_CLEAN
+    apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 ###############################################################################
-
-# ESP-IDF Installation
-RUN cd /opt && \
-    git clone --recursive ${ESP_IDF_REPO_URL} && \
-    cd esp-idf && \
-    git checkout ${ESP_IDF_VERSION} && \
-    git submodule update --init --recursive && \
-    ./install.sh all && \
-    echo "source /opt/esp-idf/export.sh" >> /root/.bashrc
 
 # CMake Installation
 RUN wget -O cmake.tar.gz "${CMAKE_PKG_URL}" && \
     tar -xvzf cmake.tar.gz -C /tmp && \
+    mkdir -p /opt/tools && \
     cp -a /tmp/cmake* /opt/tools/cmake_$CMAKE_VERSION && \
     rm -rf /tmp/cmake* && \
     rm cmake.tar.gz
@@ -116,41 +118,107 @@ ENV PATH="/opt/tools/cmake_${CMAKE_VERSION}/bin:${PATH}"
 
 # JLink Installation
 RUN wget -O JLink.deb --post-data $JLINK_LICENSE_ACCEPT "${JLINK_PKG_URL}" && \
-    apt-get install --yes ./JLink.deb  && \
+    apt-get update && apt-get install --yes ./JLink.deb && \
     rm -f JLink.deb
 
 # PlantUML Installation
-RUN $APT_UPDATE && $APT_INSTALL \
-        default-jre && \
-    $APT_CLEAN && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        default-jre \
+        && \
+    apt-get autoremove -y && apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* && \
     wget -O /tmp/plantuml.zip "${PLANTUML_PKG_URL}" && \
     unzip /tmp/plantuml.zip -d /opt/tools/plantuml && \
     ln -s /opt/tools/plantuml/plantuml-full /usr/bin/plantuml && \
     rm -f /tmp/plantuml.zip
 
 # Pandoc Installation
-RUN $APT_UPDATE && $APT_INSTALL \
-        texlive-latex-base texlive-latex-extra texlive-xetex librsvg2-bin && \
-    $APT_CLEAN && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        texlive-latex-base \
+        texlive-latex-extra \
+        texlive-xetex \
+        librsvg2-bin \
+        && \
+    apt-get autoremove -y && apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* && \
     wget -O /tmp/pandoc.deb $PANDOC_PKG_URL && \
     dpkg -i /tmp/pandoc.deb && \
     rm -f /tmp/pandoc.deb
 
 ###############################################################################
 
-# ccache Configuration
+# ccache configuration
 RUN /usr/sbin/update-ccache-symlinks
 ENV PATH="/usr/lib/ccache:${PATH}"
 
+# Config git
+RUN git config --global include.path "/home/${CONTAINER_USER}/.gitconfig"
+
 ###############################################################################
 
-# Default shell
-SHELL ["/bin/bash", "-c"]
+# VSCode Directories
+ARG VSCODE_USER_DIR="/home/${CONTAINER_USER}/.vscode"
+ARG VSCODE_EXT_DIR="${VSCODE_USER_DIR}/extensions"
 
-# Work Directory
-WORKDIR /project
+# VSCode Extension Install
+ARG VSCODE_INSTALL_EXT="code \
+--user-data-dir ${VSCODE_USER_DIR} \
+--extensions-dir ${VSCODE_EXT_DIR} \
+--install-extension"
 
-# Container Run Command
-CMD ["/bin/bash"]
+# VSCode Extension Install Hide Node Deprecation Warnings
+ARG NODE_OPTIONS="--no-deprecation"
+
+# VSCode Extension Install Hide Windows Subsystem Warning Prompt
+ENV DONT_PROMPT_WSL_INSTALL="1"
+
+# Create VSCode user config directory
+RUN mkdir -p /home/${CONTAINER_USER}/.config/Code/User/
+
+# Install vscode
+RUN wget -O vscode.deb "${VSCODE_PKG_URL}" && \
+    apt-get update && \
+    apt-get install --yes ./vscode.deb && \
+    rm -f vscode.deb
+
+# Install vscode extensions from marketplace
+RUN $VSCODE_INSTALL_EXT ms-vscode.cpptools@1.25.3 && \
+    $VSCODE_INSTALL_EXT ms-vscode.cpptools-themes@2.0.0 && \
+    $VSCODE_INSTALL_EXT ms-vscode.cmake-tools@1.20.53 && \
+    $VSCODE_INSTALL_EXT espressif.esp-idf-extension@2.1.0 && \
+    $VSCODE_INSTALL_EXT dan-c-underwood.arm@1.7.4 && \
+    $VSCODE_INSTALL_EXT shardulm94.trailing-spaces@0.4.1 && \
+    $VSCODE_INSTALL_EXT webfreak.debug@0.27.0 && \
+    $VSCODE_INSTALL_EXT ZixuanWang.linkerscript@1.0.4 && \
+    $VSCODE_INSTALL_EXT yzhang.markdown-all-in-one@3.6.3 && \
+    $VSCODE_INSTALL_EXT DavidAnson.vscode-markdownlint@0.59.0 && \
+    $VSCODE_INSTALL_EXT eamodio.gitlens@17.0.3 && \
+    $VSCODE_INSTALL_EXT waderyan.gitblame@11.1.2 && \
+    $VSCODE_INSTALL_EXT mhutchie.git-graph@1.30.0 && \
+    $VSCODE_INSTALL_EXT donjayamanne.githistory@0.6.20 && \
+    $VSCODE_INSTALL_EXT cschlosser.doxdocgen@1.4.0 && \
+    $VSCODE_INSTALL_EXT streetsidesoftware.code-spell-checker@4.0.47 && \
+    $VSCODE_INSTALL_EXT jebbs.plantuml@2.18.1 && \
+    $VSCODE_INSTALL_EXT ms-python.python@2025.4.0 && \
+    $VSCODE_INSTALL_EXT spmeesseman.vscode-taskexplorer@2.13.2
+
+# Add VSCode default User configuration files
+ADD --chown=${CONTAINER_USER}:${CONTAINER_USER} \
+    container/vscode_config/*.json /home/${CONTAINER_USER}/.config/Code/User/
+
+###############################################################################
+
+# Change ownership of the home directory to the created user
+RUN chown ${CONTAINER_USER}:${CONTAINER_USER} -R /home/${CONTAINER_USER}
+
+# Set the container user that will use the image
+USER ${CONTAINER_USER}
+ENV HOME=/home/${CONTAINER_USER}
+WORKDIR /home/${CONTAINER_USER}
+
+# Launch VSCode at container logging
+ENV CMD_CODE="code --disable-gpu"
+CMD ["/bin/bash", "-c", "${CMD_CODE} & /bin/bash"]
 
 ###############################################################################
