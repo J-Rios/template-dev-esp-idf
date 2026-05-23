@@ -1,0 +1,156 @@
+#
+# Docker File for Embedded Development Environment of Espressif MCUs
+# with esp-idf (e.g. ESP32).
+#
+# It Install all the needed tools on top of a base Linux image to allow
+# firmware development of these devices controllers.
+#
+
+###############################################################################
+
+# Base OS
+FROM ubuntu:26.04
+
+###############################################################################
+
+# ESP-IDF Setup
+ARG ESP_IDF_VERSION="v6.0.1"
+ARG ESP_IDF_REPO_URL="https://github.com/espressif/esp-idf.git"
+
+# CMake Setup (https://github.com/Kitware/CMake)
+ARG CMAKE_VERSION="4.3.3"
+ARG CMAKE_PKG="cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+ARG CMAKE_REPO_URL="https://github.com/Kitware/CMake/releases/download"
+ARG CMAKE_PKG_URL="${CMAKE_REPO_URL}/v${CMAKE_VERSION}/${CMAKE_PKG}"
+
+# JLink Tools Setup (https://www.segger.com/downloads/jlink)
+ARG JLINK_VERSION="770"
+ARG JLINK_PKG="JLink_Linux_V${JLINK_VERSION}_x86_64.deb"
+ARG JLINK_REPO_URL="https://www.segger.com/downloads/jlink"
+ARG JLINK_PKG_URL="${JLINK_REPO_URL}/${JLINK_PKG}"
+ARG JLINK_LICENSE_ACCEPT=\
+"accept_license_agreement=accepted&submit=Download+software"
+
+# PlantUML Setup
+ARG PLANTUML_VERSION="1.2026.4"
+ARG PLANTUML_PKG="plantuml-full-linux-amd64-${PLANTUML_VERSION}.zip"
+ARG PLANTUML_REPO_URL="https://github.com/plantuml/plantuml/releases/download"
+ARG PLANTUML_PKG_URL=\
+"${PLANTUML_REPO_URL}/v${PLANTUML_VERSION}-native/${PLANTUML_PKG}"
+
+# Pandoc Setup
+ARG PANDOC_VER="3.9.0.2"
+ARG PANDOC_REPO_URL="https://github.com/jgm/pandoc/releases/download"
+ARG PANDOC_PKG="pandoc-${PANDOC_VER}-1-amd64.deb"
+ARG PANDOC_PKG_URL="${PANDOC_REPO_URL}/${PANDOC_VER}/${PANDOC_PKG}"
+
+###############################################################################
+
+# Set Environment Variable for no user interaction with APT
+ENV DEBIAN_FRONTEND=noninteractive
+
+# APT Common Commands
+ARG APT_UPDATE="apt-get update"
+ARG APT_INSTALL="apt-get install -y --no-install-recommends"
+ARG APT_CLEAN=\
+"apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*"
+
+###############################################################################
+
+# Install APT Tools
+RUN $APT_UPDATE && $APT_INSTALL apt-utils && $APT_INSTALL \
+        build-essential \
+        git \
+        python3 \
+        python3-pip \
+        python3-venv \
+        gdb \
+        make \
+        cmake \
+        ninja-build \
+        pkg-config \
+        cppcheck \
+        lcov \
+        clang-format \
+        clang-tidy \
+        doxygen \
+        curl \
+        wget \
+        flex \
+        bison \
+        gperf \
+        ccache \
+        libffi-dev \
+        libssl-dev \
+        dfu-util \
+        curl \
+        unzip \
+        gdb-multiarch \
+        openocd \
+        usbutils \
+        libusb-1.0-0-dev \
+        libhidapi-dev \
+        libftdi1-dev \
+        libudev-dev \
+        && \
+    $APT_CLEAN
+
+###############################################################################
+
+# ESP-IDF Installation
+RUN cd /opt && \
+    git clone --recursive ${ESP_IDF_REPO_URL} && \
+    cd esp-idf && \
+    git checkout ${ESP_IDF_VERSION} && \
+    git submodule update --init --recursive && \
+    ./install.sh all && \
+    echo "source /opt/esp-idf/export.sh" >> /root/.bashrc
+
+# CMake Installation
+RUN wget -O cmake.tar.gz "${CMAKE_PKG_URL}" && \
+    tar -xvzf cmake.tar.gz -C /tmp && \
+    cp -a /tmp/cmake* /opt/tools/cmake_$CMAKE_VERSION && \
+    rm -rf /tmp/cmake* && \
+    rm cmake.tar.gz
+ENV PATH="/opt/tools/cmake_${CMAKE_VERSION}/bin:${PATH}"
+
+# JLink Installation
+RUN wget -O JLink.deb --post-data $JLINK_LICENSE_ACCEPT "${JLINK_PKG_URL}" && \
+    apt-get install --yes ./JLink.deb  && \
+    rm -f JLink.deb
+
+# PlantUML Installation
+RUN $APT_UPDATE && $APT_INSTALL \
+        default-jre && \
+    $APT_CLEAN && \
+    wget -O /tmp/plantuml.zip "${PLANTUML_PKG_URL}" && \
+    unzip /tmp/plantuml.zip -d /opt/tools/plantuml && \
+    ln -s /opt/tools/plantuml/plantuml-full /usr/bin/plantuml && \
+    rm -f /tmp/plantuml.zip
+
+# Pandoc Installation
+RUN $APT_UPDATE && $APT_INSTALL \
+        texlive-latex-base texlive-latex-extra texlive-xetex librsvg2-bin && \
+    $APT_CLEAN && \
+    wget -O /tmp/pandoc.deb $PANDOC_PKG_URL && \
+    dpkg -i /tmp/pandoc.deb && \
+    rm -f /tmp/pandoc.deb
+
+###############################################################################
+
+# ccache Configuration
+RUN /usr/sbin/update-ccache-symlinks
+ENV PATH="/usr/lib/ccache:${PATH}"
+
+###############################################################################
+
+# Default shell
+SHELL ["/bin/bash", "-c"]
+
+# Work Directory
+WORKDIR /project
+
+# Container Run Command
+CMD ["/bin/bash"]
+
+###############################################################################
