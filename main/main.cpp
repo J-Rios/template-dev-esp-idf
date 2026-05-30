@@ -1,3 +1,10 @@
+/**
+ * @file    main.cpp
+ * @author  XXXX XXXXX
+ * @date    YYYY.MM.DD
+ * @version 1.0.0
+ * @brief   Project Main application file.
+ */
 
 /*****************************************************************************/
 
@@ -23,7 +30,9 @@
 
 /* Main Function */
 
-static void app_main(void)
+extern "C" { void app_main(void); }
+
+void app_main(void)
 {
     printf("\n");
     printf("Application Start\n");
@@ -32,14 +41,14 @@ static void app_main(void)
     // Get ESP chip information
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    unsigned chip_hw_version_major = (chip_info.revision / 100U);
-    unsigned chip_hw_version_minor = (chip_info.revision % 100U);
+    uint16_t chip_hw_version_major = (chip_info.revision / 100U);
+    uint16_t chip_hw_version_minor = (chip_info.revision % 100U);
     uint32_t flash_size = 0U;
     if(esp_flash_get_size(NULL, &flash_size) != ESP_OK)
     {
         printf("Get flash size failed");
         return;
-    }º
+    }
 
     /* Print chip information */
     printf("ESP Chip Information:\n");
@@ -58,14 +67,14 @@ static void app_main(void)
     printf("  - 802.15.4 (Zigbee/Thread): %s\n",
         (chip_info.features & CHIP_FEATURE_IEEE802154) ? "YES" : "NO");
     printf("  - Flash Memory: %" PRIu32 " MB (%s)\n",
-        flash_size / (uint32_t)(1024U * 1024U),
+        flash_size / static_cast<uint32_t>(1024U * 1024U),
         (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "Embedded" : "External");
 
     // Automatic Restart
     for (int i = 10; i >= 0; i--)
     {
         printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(1000U / portTICK_PERIOD_MS);
     }
     printf("Restarting now.\n");
     fflush(stdout);
