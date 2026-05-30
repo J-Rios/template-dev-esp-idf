@@ -93,6 +93,7 @@ RUN apt-get update && \
         libhidapi-dev \
         libftdi1-dev \
         libudev-dev \
+        libwebkit2gtk-4.1-0 \
         && \
     apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
