@@ -12,10 +12,6 @@
 # https://github.com/espressif/esp-idf/blob/master/tools/docker/Dockerfile
 FROM docker.io/espressif/idf:v6.0.1
 
-# Docker Container User
-ARG ARG_CONTAINER_USER
-ENV CONTAINER_USER=${ARG_CONTAINER_USER}
-
 ###############################################################################
 
 # VSCode Setup (https://code.visualstudio.com/updates)
@@ -55,11 +51,6 @@ ARG PANDOC_PKG_URL="${PANDOC_REPO_URL}/${PANDOC_VER}/${PANDOC_PKG}"
 
 # User root is needed to install the tools and vscode extensions
 USER root
-
-# Create user, ssh and workspace directories
-RUN useradd -ms /bin/bash ${CONTAINER_USER} && \
-    mkdir -p /home/${CONTAINER_USER}/.ssh && \
-    mkdir -p /home/${CONTAINER_USER}/workspace
 
 ###############################################################################
 
@@ -152,37 +143,40 @@ RUN apt-get update && \
 RUN /usr/sbin/update-ccache-symlinks
 ENV PATH="/usr/lib/ccache:${PATH}"
 
-# Config git
-RUN git config --global include.path "/home/${CONTAINER_USER}/.gitconfig"
+# Config git and create ssh and workspace directories
+RUN git config --global include.path "/root/.gitconfig" && \
+    mkdir -p /root/.ssh && \
+    mkdir -p /root/workspace
 
 ###############################################################################
 
 # VSCode Directories
-ARG VSCODE_USER_DIR="/home/${CONTAINER_USER}/.vscode"
-ARG VSCODE_EXT_DIR="${VSCODE_USER_DIR}/extensions"
+ARG DIR_CODE_DATA="/root/.vscode"
+ARG DIR_CODE_EXT="${DIR_CODE_DATA}/extensions"
+
+# VSCode Command
+ENV CMD_CODE="code --disable-gpu --no-sandbox \
+--user-data-dir ${DIR_CODE_DATA} \
+--extensions-dir ${DIR_CODE_EXT}"
 
 # VSCode Extension Install
-ARG VSCODE_INSTALL_EXT="code \
---user-data-dir ${VSCODE_USER_DIR} \
---extensions-dir ${VSCODE_EXT_DIR} \
---install-extension"
-
-# VSCode Extension Install Hide Node Deprecation Warnings
-ARG NODE_OPTIONS="--no-deprecation"
+ENV VSCODE_INSTALL_EXT="${CMD_CODE} --install-extension"
 
 # VSCode Extension Install Hide Windows Subsystem Warning Prompt
 ENV DONT_PROMPT_WSL_INSTALL="1"
 
-# Create VSCode user config directory
-RUN mkdir -p /home/${CONTAINER_USER}/.config/Code/User/
+# VSCode Extension Install Hide Node Deprecation Warnings
+ARG NODE_OPTIONS="--no-deprecation"
 
-# Install vscode
+# VSCode Installation
 RUN wget -O vscode.deb "${VSCODE_PKG_URL}" && \
     apt-get update && \
     apt-get install --yes ./vscode.deb && \
-    rm -f vscode.deb
+    rm -f vscode.deb && \
+    mkdir -p /root/.config/Code/User/ && \
+    echo "alias code=\"${CMD_CODE}\"" >> /root/.bashrc
 
-# Install vscode extensions from marketplace
+# VSCode Extensions Installation
 RUN $VSCODE_INSTALL_EXT ms-vscode.cpptools@1.25.3 && \
     $VSCODE_INSTALL_EXT ms-vscode.cpptools-themes@2.0.0 && \
     $VSCODE_INSTALL_EXT ms-vscode.cmake-tools@1.20.53 && \
@@ -204,21 +198,17 @@ RUN $VSCODE_INSTALL_EXT ms-vscode.cpptools@1.25.3 && \
     $VSCODE_INSTALL_EXT spmeesseman.vscode-taskexplorer@2.13.2
 
 # Add VSCode default User configuration files
-ADD --chown=${CONTAINER_USER}:${CONTAINER_USER} \
-    container/vscode_config/*.json /home/${CONTAINER_USER}/.config/Code/User/
+ADD --chown=root:root \
+    container/vscode_config/*.json /root/.config/Code/User/
 
 ###############################################################################
 
-# Change ownership of the home directory to the created user
-RUN chown ${CONTAINER_USER}:${CONTAINER_USER} -R /home/${CONTAINER_USER}
-
 # Set the container user that will use the image
-USER ${CONTAINER_USER}
-ENV HOME=/home/${CONTAINER_USER}
-WORKDIR /home/${CONTAINER_USER}
+USER root
+ENV HOME=/root
+WORKDIR /root
 
 # Launch VSCode at container login
-ENV CMD_CODE="code --disable-gpu"
 CMD ["/bin/bash", "-c", "${CMD_CODE} & /bin/bash"]
 
 ###############################################################################
