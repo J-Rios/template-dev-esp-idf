@@ -2,13 +2,14 @@
 SHELL := /bin/bash
 DIR_CONTAINER_SCRIPTS := "./container/scripts"
 
-.PHONY: help setup run run-cli remove
+.PHONY: help setup run run-cli remove save
 
 help:
 	@ echo ""
 	@ echo "Usage:"
 	@ echo "  setup: Setup and build the development environment container"
 	@ echo "  run: Run the development environment container"
+	@ echo "  save: Save changes done in the development environment container"
 	@ echo "  remove: Remove the development environment container"
 	@ echo ""
 
@@ -23,3 +24,7 @@ remove:
 run:
 	@ chmod +x $(DIR_CONTAINER_SCRIPTS)/container_run.sh
 	@ $(DIR_CONTAINER_SCRIPTS)/container_run.sh
+
+save:
+	@ chmod +x $(DIR_CONTAINER_SCRIPTS)/container_save.sh
+	@ $(DIR_CONTAINER_SCRIPTS)/container_save.sh

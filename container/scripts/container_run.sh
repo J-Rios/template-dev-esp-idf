@@ -7,6 +7,9 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # Get Project Name
 PROJECT_NAME="$(basename "$(realpath "$DIR/../..")")"
 
+# Set File to store Container ID
+FILE_CONTAINER_ID="${DIR}/../config/container_id.txt"
+
 # Get Container Image and User Name
 IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 CONTAINER_USER_HOME="/root"
@@ -40,6 +43,7 @@ echo ""
 
 # Build Podman run command arguments safely
 RUN_ARGS=(run -it --network="host" --ipc=host --rm --privileged)
+RUN_ARGS+=(--cidfile="${FILE_CONTAINER_ID}")
 
 if [ -n "$DISPLAY" ]; then
     RUN_ARGS+=(--env="DISPLAY=${DISPLAY}")

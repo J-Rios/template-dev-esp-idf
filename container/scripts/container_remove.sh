@@ -4,7 +4,7 @@ set -e
 # Actual script directory path
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-# Get Image Name
+# Get Container Image Name
 IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 
 # Remove all containers created from this image

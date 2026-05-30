@@ -67,6 +67,15 @@ idf.py flash
 idf.py monitor
 ```
 
+## 4. Save Container Changes
+
+If you have done some changes inside the container environment (i.e. updating/installing new vscode extension, applying some configurations, installing extra tools, etc) you can save this changes to make them persistent by issuing the next command at Host terminal while the container is running (recommended to close container vscode before running the command):
+
+```bash
+make save
+```
+
+
 ---
 
 ## 5. Notes
