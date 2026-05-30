@@ -36,5 +36,14 @@
     // Set CMake Parallel Jobs to use (increase project build speed with it)
     // A 0 value is used for automatic detection of number of CPUs and use the
     // maximum number of jobs according to it
-    "cmake.parallelJobs": 0
+    "cmake.parallelJobs": 0,
+
+    // Activate ESP-IDF Extension always on any directory
+    "idf.extensionActivationMode": "always",
+
+    // Set ESP-IDF Extension IDF Path
+    "idf.currentSetup": "/opt/esp/idf",
+
+    // Default ESP-IDF Monitor Baud Rate
+    "idf.monitorBaudRate": "115200"
 }
