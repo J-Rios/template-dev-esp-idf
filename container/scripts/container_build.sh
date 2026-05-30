@@ -10,4 +10,7 @@ IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 # Build The Container Image
 podman build -t ${IMG_NAME} -f "${DIR}/../Containerfile" .
 
+# Setup Git repository to ignore file mode changes
+git config core.filemode false
+
 exit 0
