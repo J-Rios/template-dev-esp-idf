@@ -217,7 +217,7 @@ USER ${CONTAINER_USER}
 ENV HOME=/home/${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
 
-# Launch VSCode at container logging
+# Launch VSCode at container login
 ENV CMD_CODE="code --disable-gpu"
 CMD ["/bin/bash", "-c", "${CMD_CODE} & /bin/bash"]
 
