@@ -13,4 +13,7 @@ podman build -t ${IMG_NAME} -f "${DIR}/../Containerfile" .
 # Setup Git repository to ignore file mode changes
 git config core.filemode false
 
+# Clear Docker Image build cache checkpoints
+docker builder prune -f
+
 exit 0
