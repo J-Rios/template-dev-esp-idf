@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 DIR_CONTAINER_SCRIPTS := "./container/scripts"
 
-.PHONY: help setup run run-cli remove save
+.PHONY: help setup remove run save
 
 help:
 	@ echo ""
@@ -23,8 +23,8 @@ remove:
 
 run:
 	@ chmod +x $(DIR_CONTAINER_SCRIPTS)/container_run.sh
-	@ $(DIR_CONTAINER_SCRIPTS)/container_run.sh
+	@ $(SHELL) $(DIR_CONTAINER_SCRIPTS)/container_run.sh
 
 save:
 	@ chmod +x $(DIR_CONTAINER_SCRIPTS)/container_save.sh
-	@ $(DIR_CONTAINER_SCRIPTS)/container_save.sh
+	@ $(SHELL) $(DIR_CONTAINER_SCRIPTS)/container_save.sh

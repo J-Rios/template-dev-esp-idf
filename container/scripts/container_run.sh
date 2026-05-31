@@ -86,7 +86,7 @@ RUN_ARGS+=(--volume="${PROJECT_DIR_TO_MOUNT}:${PROJECT_MOUNT_POINT}")
 RUN_ARGS+=("${IMG_NAME}")
 
 # Launch the image container
-podman "${RUN_ARGS[@]}"
+podman "${RUN_ARGS[@]}" || true
 
 ###############################################################################
 
