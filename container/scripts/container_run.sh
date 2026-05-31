@@ -72,11 +72,8 @@ if [ -f "${DIR_HOST_GIT_CFG}" ]; then
     RUN_ARGS+=(--volume="${DIR_HOST_GIT_CFG}:${DIR_CONTAINER_GIT_CFG_MOUNT}")
 fi
 
-if [ -d "/dev/bus/usb" ]; then
-    RUN_ARGS+=(--volume="/dev/bus/usb:/dev/bus/usb")
-else
-    echo "Warning: USB forwarding not available (missing /dev/bus/usb)."
-    echo "If you are running at WSL, use usbipd to forward an USB device."
+if [ -d "/dev" ]; then
+    RUN_ARGS+=(--volume="/dev:/dev")
 fi
 if [ -d "/run/udev" ]; then
     RUN_ARGS+=(--volume="/run/udev:/run/udev:ro")
