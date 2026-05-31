@@ -75,9 +75,18 @@ If you have done some changes inside the container environment (i.e. updating/in
 make save
 ```
 
+
+## 5. Container Image Remove
+
+In case you want to remove the container image:
+
+```bash
+sudo make remove
+```
+
 ---
 
-## 5. Notes
+## 6. Notes
 
 The development environment container contains:
 
