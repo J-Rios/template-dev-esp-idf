@@ -40,7 +40,7 @@ sudo apt update && sudo apt install -y make cmake podman
 The development environment image can be built using `make`:
 
 ```bash
-make setup
+sudo make setup
 ```
 
 ---
@@ -50,7 +50,7 @@ make setup
 Launch the development environment by:
 
 ```bash
-make run
+sudo make run
 ```
 
 This will launch the container with the required configurations and mounts.
@@ -75,7 +75,6 @@ If you have done some changes inside the container environment (i.e. updating/in
 make save
 ```
 
-
 ---
 
 ## 5. Notes
@@ -92,4 +91,4 @@ The development environment container contains:
 - **Static Code Analysis Tools:** Includes `cppcheck` and `clang-tidy` for code quality checks.
 - **Clang-Format:** For formatting C and C++ source code.
 
-The Container is run in "priviledge" mode to avoid issues and restriction to access USB devices (we need this to use programmers/debuggers hardware devices).
+The Container needs to be build-run in "rootful" mode to avoid issues and restriction to access USB devices (we need this to use programmers/debuggers hardware devices). Limitation here to run it in "rootless" mode seems to be due WSL incompatibility and potential portability problems on host-container permissions sharing depending on running OS system.
