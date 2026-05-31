@@ -10,10 +10,14 @@ IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 # Build The Container Image
 podman build -t ${IMG_NAME} -f "${DIR}/../Containerfile" .
 
+# Clean-up Container Image build cache
+podman builder prune -f
+
 # Setup Git repository to ignore file mode changes
 git config core.filemode false
 
-# Clear Docker Image build cache checkpoints
-docker builder prune -f
+# Ensures Host user has permissions to access dialout USB devices
+#usermod -aG dialout $USER
+#newgrp dialout
 
 exit 0
