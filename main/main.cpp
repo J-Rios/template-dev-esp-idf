@@ -46,7 +46,7 @@ void app_main(void)
     uint32_t flash_size = 0U;
     if(esp_flash_get_size(NULL, &flash_size) != ESP_OK)
     {
-        printf("Get flash size failed");
+        printf("Fail to get Flash size\n");
         return;
     }
 
@@ -54,7 +54,7 @@ void app_main(void)
     printf("ESP Chip Information:\n");
     printf("---------------------\n");
     printf("  - Chip: %s\n", CONFIG_IDF_TARGET);
-    printf("  - HW Version/Revision: v%d.%d, ",
+    printf("  - HW Version: v%d.%d\n",
         static_cast<int>(chip_hw_version_major),
         static_cast<int>(chip_hw_version_minor));
     printf("  - Cores: %d\n", chip_info.cores);
@@ -69,9 +69,10 @@ void app_main(void)
     printf("  - Flash Memory: %" PRIu32 " MB (%s)\n",
         flash_size / static_cast<uint32_t>(1024U * 1024U),
         (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "Embedded" : "External");
+    printf("\n");
 
     // Automatic Restart
-    for (int i = 10; i >= 0; i--)
+    for (int i = 60; i >= 0; i--)
     {
         printf("Restarting in %d seconds...\n", i);
         vTaskDelay(1000U / portTICK_PERIOD_MS);
