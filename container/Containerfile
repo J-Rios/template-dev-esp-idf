@@ -147,7 +147,8 @@ ENV PATH="/usr/lib/ccache:${PATH}"
 # Config git and create ssh and workspace directories
 RUN git config --global include.path "/root/.gitconfig" && \
     mkdir -p /root/.ssh && \
-    mkdir -p /root/workspace
+    mkdir -p /root/workspace && \
+    git config --global --add safe.directory /root/workspace/*
 
 ###############################################################################
 
