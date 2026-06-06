@@ -14,21 +14,7 @@ FILE_CONTAINER_ID="${DIR}/../config/container_id.txt"
 IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 CONTAINER_USER_HOME="/root"
 
-# Get Host User
-HOST_USER=$USER
-if [ -n "$SUDO_USER" ]; then
-    HOST_USER=$SUDO_USER
-fi
-
 ###############################################################################
-
-# SSH Host Configuration to mount
-DIR_HOST_SSH_CFG="/home/${HOST_USER}/.ssh"
-DIR_CONTAINER_SSH_CFG_MOUNT="${CONTAINER_USER_HOME}/.ssh"
-
-# Git Host Configuration to mount
-DIR_HOST_GIT_CFG="/home/${HOST_USER}/.gitconfig"
-DIR_CONTAINER_GIT_CFG_MOUNT="${CONTAINER_USER_HOME}/.gitconfig"
 
 # Mount point
 PROJECT_DIR_TO_MOUNT="${DIR}/../.."
@@ -66,25 +52,12 @@ if [ -d /mnt/wslg ]; then
     RUN_ARGS+=(--volume="/mnt/wslg:/mnt/wslg:ro")
     RUN_ARGS+=(--env="WAYLAND_DISPLAY=${WAYLAND_DISPLAY}")
 fi
-
-if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "${SSH_AUTH_SOCK}" ]; then
-    RUN_ARGS+=(--env="SSH_AUTH_SOCK=${SSH_AUTH_SOCK}")
-    RUN_ARGS+=(--volume="${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}")
-fi
-if [ -d "${DIR_HOST_SSH_CFG}" ]; then
-    RUN_ARGS+=(--volume="${DIR_HOST_SSH_CFG}:${DIR_CONTAINER_SSH_CFG_MOUNT}")
-fi
-if [ -f "${DIR_HOST_GIT_CFG}" ]; then
-    RUN_ARGS+=(--volume="${DIR_HOST_GIT_CFG}:${DIR_CONTAINER_GIT_CFG_MOUNT}")
-fi
-
 if [ -d "/dev" ]; then
     RUN_ARGS+=(--volume="/dev:/dev")
 fi
 if [ -d "/run/udev" ]; then
     RUN_ARGS+=(--volume="/run/udev:/run/udev:ro")
 fi
-
 RUN_ARGS+=(--volume="${PROJECT_DIR_TO_MOUNT}:${PROJECT_MOUNT_POINT}")
 RUN_ARGS+=("${IMG_NAME}")
 
