@@ -14,14 +14,20 @@ FILE_CONTAINER_ID="${DIR}/../config/container_id.txt"
 IMG_NAME=$(cat "${DIR}/../config/container_name.txt")
 CONTAINER_USER_HOME="/root"
 
+# Get Host User
+HOST_USER=$USER
+if [ -n "$SUDO_USER" ]; then
+    HOST_USER=$SUDO_USER
+fi
+
 ###############################################################################
 
 # SSH Host Configuration to mount
-DIR_HOST_SSH_CFG="/home/${USER}/.ssh"
+DIR_HOST_SSH_CFG="/home/${HOST_USER}/.ssh"
 DIR_CONTAINER_SSH_CFG_MOUNT="${CONTAINER_USER_HOME}/.ssh"
 
 # Git Host Configuration to mount
-DIR_HOST_GIT_CFG="/home/${USER}/.gitconfig"
+DIR_HOST_GIT_CFG="/home/${HOST_USER}/.gitconfig"
 DIR_CONTAINER_GIT_CFG_MOUNT="${CONTAINER_USER_HOME}/.gitconfig"
 
 # Mount point
